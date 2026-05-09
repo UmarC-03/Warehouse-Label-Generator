@@ -1,0 +1,10 @@
+{
+  "name": "LabelMaster MVP",
+  "description": "Professional label generator for warehouse stock stickers with LACKHENBUG price encoding and precision PDF export.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "PDF Generation",
+    "Price Encoding",
+    "Multi-Order Management"
+  ]
+}
