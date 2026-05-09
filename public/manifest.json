@@ -8,13 +8,13 @@
   "theme_color": "#ffffff",
   "icons": [
     {
-      "src": "https://cdn-icons-png.flaticon.com/512/1042/1042339.png",
+      "src": "LABEL.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "https://cdn-icons-png.flaticon.com/512/1042/1042339.png",
+      "src": "LABEL.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"
