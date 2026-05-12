@@ -9,7 +9,9 @@ import {
   UtensilsCrossed, 
   Sun,
   CookingPot,
-  Type
+  Type,
+  Tv,
+  Waves
 } from 'lucide-react';
 import { CategoryPreset } from './types';
 
@@ -32,11 +34,13 @@ export const CATEGORY_PRESETS: CategoryPreset[] = [
   { id: 'stoves', label: 'Stoves', color: '#C0C0C0', icon: CookingPot },
   { id: 'fridges', label: 'Fridges', color: '#007BFF', icon: Refrigerator },
   { id: 'ovens', label: 'Ovens', color: '#FFD700', icon: Flame },
-  { id: 'freezers', label: 'Chest Freezers', color: '#ADD8E6', icon: Snowflake },
+  { id: 'freezers', label: 'Chest Freezers', color: '#008080', icon: Snowflake },
   { id: 'hobs', label: 'Hobs', color: '#FF0000', icon: CircleDot },
   { id: 'extractors', label: 'Extractors', color: '#8000FF', icon: Wind },
   { id: 'washing_machines', label: 'Washers', color: '#FF7A00', icon: WashingMachine },
-  { id: 'dish_washers', label: 'Dish Washers', color: '#00A651', icon: UtensilsCrossed }
+  { id: 'dish_washers', label: 'Dish Washers', color: '#00A651', icon: UtensilsCrossed },
+  { id: 'tvs', label: 'TVs', color: '#4B0082', icon: Tv },
+  { id: 'dryers', label: 'Tumble Dryers', color: '#E30B5C', icon: Waves }
 ];
 
 export const VAT_RATE = 1.15;

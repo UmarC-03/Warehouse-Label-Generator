@@ -20,6 +20,7 @@ interface OrderCardProps {
 
 export const OrderCard: React.FC<OrderCardProps> = ({ order, index, onUpdate, onRemove, error }) => {
   const [showColorPicker, setShowColorPicker] = React.useState(false);
+  const [dateMode, setDateMode] = React.useState<'date' | 'month'>('month');
   const isWarning = error?.startsWith('Warning:');
 
   return (
@@ -108,14 +109,38 @@ export const OrderCard: React.FC<OrderCardProps> = ({ order, index, onUpdate, on
           </div>
 
           <div className="space-y-1.5 md:space-y-2">
-            <label className="text-[9px] md:text-[10px] font-black uppercase text-gray-400 block tracking-[0.2em] ml-1 flex items-center gap-1.5">
-              <Calendar size={10} className="text-gray-300" /> Date (DD/MM/YYYY)
-            </label>
+            <div className="flex items-center justify-between">
+              <label className="text-[9px] md:text-[10px] font-black uppercase text-gray-400 block tracking-[0.2em] ml-1 flex items-center gap-1.5">
+                <Calendar size={10} className="text-gray-300" /> {dateMode === 'month' ? 'Delivery Month' : 'Delivery Date (DD/MM/YYYY)'}
+              </label>
+              
+              {/* Delivery Mode Switch */}
+              <div className="flex bg-gray-50/50 p-0.5 rounded-md border border-gray-100">
+                <button 
+                  onClick={() => setDateMode('date')}
+                  className={cn(
+                    "px-1.5 py-0.5 text-[7px] md:text-[8px] font-black uppercase tracking-wider rounded transition-all",
+                    dateMode === 'date' ? "bg-white text-gray-900 shadow-sm" : "text-gray-400 hover:text-gray-600"
+                  )}
+                >
+                  Day
+                </button>
+                <button 
+                  onClick={() => setDateMode('month')}
+                  className={cn(
+                    "px-1.5 py-0.5 text-[7px] md:text-[8px] font-black uppercase tracking-wider rounded transition-all",
+                    dateMode === 'month' ? "bg-white text-gray-900 shadow-sm" : "text-gray-400 hover:text-gray-600"
+                  )}
+                >
+                  Month
+                </button>
+              </div>
+            </div>
             <input
-              type="date"
+              type={dateMode === 'date' ? 'date' : 'month'}
               value={order.deliveryDate || ''}
               onChange={(e) => onUpdate(order.id, { deliveryDate: e.target.value })}
-              className="w-full text-xs md:text-sm font-bold bg-gray-50/50 border border-gray-100 rounded-[14px] md:rounded-[16px] px-4 md:px-5 py-2.5 md:py-3 outline-none focus:bg-white focus:border-gray-900 focus:shadow-lg focus:shadow-gray-100/50 transition-all"
+              className="w-full text-xs md:text-sm font-bold bg-gray-50/50 border border-gray-100 rounded-[14px] md:rounded-[16px] px-4 md:px-5 py-2.5 md:py-3 outline-none focus:bg-white focus:border-gray-900 focus:shadow-lg focus:shadow-gray-100/50 transition-all uppercase"
             />
           </div>
 
@@ -155,7 +180,7 @@ export const OrderCard: React.FC<OrderCardProps> = ({ order, index, onUpdate, on
               <div className="relative">
                 <input
                   type="number"
-                  value={order.vatRate}
+                  value={order.vatRate === 0 ? '' : order.vatRate}
                   onChange={(e) => onUpdate(order.id, { vatRate: parseFloat(e.target.value) || 0 })}
                   className="w-full text-xs md:text-sm font-bold bg-gray-50/50 border border-gray-100 rounded-[14px] md:rounded-[16px] px-4 md:px-5 py-2.5 md:py-3 outline-none focus:bg-white focus:border-gray-900 focus:shadow-lg focus:shadow-gray-100/50 transition-all pr-8 md:pr-10"
                 />

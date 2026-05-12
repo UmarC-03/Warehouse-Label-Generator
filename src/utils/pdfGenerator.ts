@@ -63,16 +63,20 @@ export function generatePDF(stickers: (Sticker & { slotIndex: number })[]) {
       const code = `${sticker.monthIndex} / ${String(sticker.itemNumber).padStart(2, '0')} ${sticker.lackhenbugCode}`;
       doc.text(code, x + LABEL_WIDTH / 2, y + LABEL_HEIGHT / 2 + 2, { align: 'center' });
 
-      if (sticker.deliveryDate && sticker.deliveryDate.includes('-')) {
-        const parts = sticker.deliveryDate.split('-');
-        if (parts.length === 3) {
-          const [year, month, day] = parts;
-          const formattedDate = `${day}/${month}/${year}`;
-          doc.setTextColor(220, 38, 38); // red-600
-          doc.setFont('helvetica', 'bold');
-          doc.setFontSize(7);
-          doc.text(`DELIVERY: ${formattedDate}`, x + 4, y + LABEL_HEIGHT - 4);
+      if (sticker.deliveryDate) {
+        let formattedDate = sticker.deliveryDate;
+        if (sticker.deliveryDate.includes('-')) {
+          const parts = sticker.deliveryDate.split('-');
+          if (parts.length === 3) {
+            const [year, month, day] = parts;
+            formattedDate = `${day}/${month}/${year}`;
+          }
         }
+        
+        doc.setTextColor(220, 38, 38); // red-600
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(7);
+        doc.text(`DELIVERY: ${formattedDate}`, x + 4, y + LABEL_HEIGHT - 4);
       }
 
       const category = CATEGORY_PRESETS.find(p => p.id === sticker.color);

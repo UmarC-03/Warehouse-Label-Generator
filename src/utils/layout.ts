@@ -10,7 +10,6 @@ import { encodeLackhenbug, formatMonthIndex } from './pricing';
 export function calculateLayout(orders: Order[]): (Sticker & { slotIndex: number })[] {
   const SLOTS_PER_PAGE = ROWS_PER_PAGE * COLS_PER_PAGE;
   const allSlots: (Sticker | null)[] = [];
-  const monthIndex = formatMonthIndex();
 
   // Pre-calculate the fill sequence for multiple pages
   // Sequence for 10 pages initially, can expand if needed
@@ -34,6 +33,7 @@ export function calculateLayout(orders: Order[]): (Sticker & { slotIndex: number
   let sequencePointer = 0;
 
   orders.forEach((order) => {
+    const monthIndex = formatMonthIndex(order.deliveryDate);
     // 1. Find next truly free slot in sequence
     while (allSlots[fillSequence[sequencePointer]] !== undefined) {
       sequencePointer++;

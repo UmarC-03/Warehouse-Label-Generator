@@ -19,7 +19,7 @@ const INITIAL_ORDER: Omit<Order, 'id'> = {
   costPrice: 0,
   vatRate: 15,
   startFrom: 1,
-  deliveryDate: new Date().toISOString().split('T')[0]
+  deliveryDate: ''
 };
 
 export default function App() {
@@ -34,6 +34,7 @@ export default function App() {
       if (!o.heading.trim()) results[o.id] = "Heading Empty";
       else if (o.quantity <= 0) results[o.id] = "Qty must be > 0";
       else if (o.categoryId === 'standard') results[o.id] = "Warning: Black Text Selected";
+      else if (o.costPrice > 0 && o.costPrice <= 350) results[o.id] = "Warning: Low Price (1-350)";
     });
     return results;
   }, [orders]);
