@@ -4,20 +4,23 @@
   "description": "Professional label generator for warehouse stock stickers.",
   "start_url": "/",
   "display": "standalone",
+  "orientation": "portrait",
   "background_color": "#ffffff",
   "theme_color": "#ffffff",
   "icons": [
     {
-      "src": "LABEL.png",
+      "src": "/LABEL.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "LABEL.png",
+      "src": "/LABEL.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"
     }
   ]
 }
+
+
