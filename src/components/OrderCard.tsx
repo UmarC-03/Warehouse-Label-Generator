@@ -1,5 +1,5 @@
 import React from 'react';
-import { Trash2, Calendar, Hash, DollarSign, Percent, AlertCircle, ChevronRight } from 'lucide-react';
+import { Trash2, Calendar, Hash, DollarSign, Percent, AlertCircle, ChevronRight, Tag, FileText } from 'lucide-react';
 import { Order } from '../types';
 import { CATEGORY_PRESETS } from '../constants';
 import { clsx, type ClassValue } from 'clsx';
@@ -20,15 +20,68 @@ interface OrderCardProps {
 
 export const OrderCard: React.FC<OrderCardProps> = ({ order, index, onUpdate, onRemove, error }) => {
   const [showColorPicker, setShowColorPicker] = React.useState(false);
+  const [showBrand, setShowBrand] = React.useState(!!order.brand);
+  const [showDescription, setShowDescription] = React.useState(!!order.description);
   const [dateMode, setDateMode] = React.useState<'date' | 'month'>('month');
+  const [selection, setSelection] = React.useState<{ start: number, end: number, x: number, y: number } | null>(null);
   const isWarning = error?.startsWith('Warning:');
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      const container = e.currentTarget.closest('.flex-col');
+      if (container) {
+        const inputs = Array.from(container.querySelectorAll('input')) as HTMLInputElement[];
+        const index = inputs.indexOf(e.currentTarget);
+        if (index > -1 && index < inputs.length - 1) {
+          inputs[index + 1].focus();
+        }
+      }
+    }
+  };
+
+  const handleTextSelect = (e: React.SyntheticEvent<HTMLInputElement>) => {
+    const input = e.currentTarget;
+    const start = input.selectionStart;
+    const end = input.selectionEnd;
+
+    if (start !== null && end !== null && start !== end) {
+      const rect = input.getBoundingClientRect();
+      setSelection({
+        start,
+        end,
+        x: rect.left + window.scrollX,
+        y: rect.top + window.scrollY - 40
+      });
+    } else {
+      setSelection(null);
+    }
+  };
+
+  const addHighlight = (color: 'blue' | 'red' | 'yellow') => {
+    if (!selection) return;
+    
+    const newHighlight = { start: selection.start, end: selection.end, color };
+    const currentHighlights = order.highlights || [];
+    
+    // Simple implementation: just keep adding. In a more complex one, we'd merge/filter overlaps.
+    onUpdate(order.id, { 
+      highlights: [...currentHighlights, newHighlight] 
+    });
+    setSelection(null);
+  };
+
+  const clearHighlights = () => {
+    onUpdate(order.id, { highlights: [] });
+    setSelection(null);
+  };
 
   return (
     <div className={cn(
-      "w-full bg-white rounded-[20px] md:rounded-[24px] p-5 md:p-7 transition-all border border-gray-100 shadow-xl shadow-gray-200/50",
+      "w-full bg-white rounded-[20px] md:rounded-[24px] p-4 md:p-5 transition-all border border-gray-100 shadow-xl shadow-gray-200/50",
       error ? (isWarning ? "border-amber-200 bg-amber-50/30" : "border-red-200 bg-red-50/30") : ""
     )}>
-      <div className="flex flex-col gap-4 md:gap-6">
+      <div className="flex flex-col gap-3 md:gap-4">
         {/* Leading Info */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -87,28 +140,176 @@ export const OrderCard: React.FC<OrderCardProps> = ({ order, index, onUpdate, on
             </div>
           </div>
           
-          <button
-            onClick={() => onRemove(order.id)}
-            className="text-gray-300 hover:text-red-500 hover:bg-red-50 p-2.5 rounded-xl transition-all"
-          >
-            <Trash2 size={18} />
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setShowBrand(!showBrand)}
+              className={cn(
+                "p-2.5 rounded-xl transition-all border",
+                showBrand ? "bg-black text-white border-black" : "text-gray-300 border-gray-100 hover:border-gray-300 hover:text-black"
+              )}
+              title="Toggle Brand"
+            >
+              <Tag size={18} />
+            </button>
+            <button
+              onClick={() => setShowDescription(!showDescription)}
+              className={cn(
+                "p-2.5 rounded-xl transition-all border",
+                showDescription ? "bg-black text-white border-black" : "text-gray-300 border-gray-100 hover:border-gray-300 hover:text-black"
+              )}
+              title="Toggle Description"
+            >
+              <FileText size={18} />
+            </button>
+            <button
+              onClick={() => onRemove(order.id)}
+              className="text-gray-300 hover:text-red-500 hover:bg-red-50 p-2.5 rounded-xl transition-all"
+            >
+              <Trash2 size={18} />
+            </button>
+          </div>
         </div>
 
         {/* Input Fields Container - Vertical Stack */}
-        <div className="flex flex-col gap-4 md:gap-5">
-          <div className="space-y-1.5 md:space-y-2">
+        <div className="flex flex-col gap-3 md:gap-3.5">
+          <AnimatePresence>
+            {showBrand && (
+              <motion.div 
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+                className="space-y-1 md:space-y-1.5 overflow-hidden"
+              >
+                <label className="text-[9px] md:text-[10px] font-black uppercase text-gray-400 block tracking-[0.2em] ml-1">Brand Name</label>
+                <input
+                  type="text"
+                  value={order.brand || ''}
+                  onChange={(e) => onUpdate(order.id, { brand: e.target.value })}
+                  onKeyDown={handleKeyDown}
+                  placeholder="E.G. DEFY"
+                  className="w-full text-xs md:text-sm font-bold bg-gray-50/50 border border-gray-100 rounded-[14px] md:rounded-[16px] px-4 md:px-5 py-2 md:py-2.5 outline-none focus:bg-white focus:border-gray-900 focus:shadow-lg focus:shadow-gray-100/50 transition-all uppercase placeholder:text-gray-200"
+                />
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          <div className="space-y-1 md:space-y-1.5 relative">
             <label className="text-[9px] md:text-[10px] font-black uppercase text-gray-400 block tracking-[0.2em] ml-1">Label Heading</label>
-            <input
-              type="text"
-              value={order.heading}
-              onChange={(e) => onUpdate(order.id, { heading: e.target.value })}
-              placeholder="E.G. MAIN STOVES"
-              className="w-full text-xs md:text-sm font-bold bg-gray-50/50 border border-gray-100 rounded-[14px] md:rounded-[16px] px-4 md:px-5 py-2.5 md:py-3 outline-none focus:bg-white focus:border-gray-900 focus:shadow-lg focus:shadow-gray-100/50 transition-all uppercase placeholder:text-gray-200"
-            />
+            <div className={cn(
+              "relative w-full rounded-[14px] md:rounded-[16px] border transition-all overflow-hidden",
+              "bg-gray-50/50 border-gray-100 focus-within:bg-white focus-within:border-gray-900 focus-within:shadow-lg focus-within:shadow-gray-100/50",
+              order.highlights && order.highlights.length > 0 && "pr-10"
+            )}>
+              {/* Highlight Backdrop */}
+              <div 
+                className="absolute inset-0 px-4 md:px-5 py-2 md:py-2.5 text-xs md:text-sm font-bold uppercase pointer-events-none flex items-center"
+                aria-hidden="true"
+              >
+                <div className="backdrop-content w-full h-full flex items-center whitespace-pre overflow-hidden">
+                {(() => {
+                  const text = (order.heading || '').toUpperCase();
+                  if (!order.highlights || order.highlights.length === 0) return null;
+                  
+                  const segments: React.ReactNode[] = [];
+                  let lastIndex = 0;
+                  const sorted = [...order.highlights].sort((a,b) => a.start - b.start);
+                  
+                  sorted.forEach((h, idx) => {
+                    if (h.start > lastIndex) {
+                      segments.push(<span key={`text-${idx}`} className="text-transparent">{text.substring(lastIndex, h.start)}</span>);
+                    }
+                    segments.push(
+                      <span 
+                        key={`highlight-${idx}`} 
+                        className={cn(
+                          "rounded-[2px] transition-colors py-0.5 -my-0.5 px-0.5 -mx-0.5",
+                          h.color === 'blue' ? "bg-blue-500/20" : h.color === 'red' ? "bg-red-500/20" : "bg-yellow-500/30"
+                        )}
+                      >
+                        <span className="text-transparent">{text.substring(h.start, h.end)}</span>
+                      </span>
+                    );
+                    lastIndex = h.end;
+                  });
+                  return segments;
+                })()}
+                </div>
+              </div>
+
+              <input
+                type="text"
+                value={order.heading}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  const validHighlights = (order.highlights || []).filter(h => h.end <= val.length);
+                  onUpdate(order.id, { heading: val, highlights: validHighlights });
+                }}
+                onKeyDown={handleKeyDown}
+                onSelect={handleTextSelect}
+                onKeyUp={handleTextSelect}
+                onScroll={(e) => {
+                  const backdrop = e.currentTarget.parentElement?.querySelector('.backdrop-content');
+                  if (backdrop) {
+                    backdrop.scrollLeft = e.currentTarget.scrollLeft;
+                  }
+                }}
+                placeholder="E.G. MAIN STOVES"
+                className="w-full text-xs md:text-sm font-bold bg-transparent px-4 md:px-5 py-2 md:py-2.5 outline-none uppercase placeholder:text-gray-200 relative z-10"
+              />
+
+              {order.highlights && order.highlights.length > 0 && (
+                <button 
+                  onClick={clearHighlights}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 z-20 p-1 rounded-md bg-gray-100 text-gray-400 hover:text-gray-900 transition-colors"
+                  title="Clear All Highlights"
+                >
+                  <Trash2 size={12} />
+                </button>
+              )}
+            </div>
+            
+            <AnimatePresence>
+              {selection && (
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.9, y: 5 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.9, y: 5 }}
+                  className="absolute z-[100] bg-white border border-gray-100 shadow-2xl rounded-xl p-1.5 flex gap-1.5"
+                  style={{ 
+                    left: 20, 
+                    top: -45, 
+                  }}
+                >
+                  <button onClick={() => addHighlight('blue')} className="w-6 h-6 rounded-lg bg-blue-500 hover:scale-110 transition-transform shadow-sm" title="Highlight Blue" />
+                  <button onClick={() => addHighlight('red')} className="w-6 h-6 rounded-lg bg-red-500 hover:scale-110 transition-transform shadow-sm" title="Highlight Red" />
+                  <button onClick={() => addHighlight('yellow')} className="w-6 h-6 rounded-lg bg-yellow-400 hover:scale-110 transition-transform shadow-sm" title="Highlight Yellow" />
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
 
-          <div className="space-y-1.5 md:space-y-2">
+          <AnimatePresence>
+            {showDescription && (
+              <motion.div 
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+                className="space-y-1 md:space-y-1.5 overflow-hidden"
+              >
+                <label className="text-[9px] md:text-[10px] font-black uppercase text-gray-400 block tracking-[0.2em] ml-1">Description</label>
+                <input
+                  type="text"
+                  value={order.description || ''}
+                  onChange={(e) => onUpdate(order.id, { description: e.target.value })}
+                  onKeyDown={handleKeyDown}
+                  placeholder="E.G. 4 PLATE COMPACT"
+                  className="w-full text-xs md:text-sm font-bold bg-gray-50/50 border border-gray-100 rounded-[14px] md:rounded-[16px] px-4 md:px-5 py-2 md:py-2.5 outline-none focus:bg-white focus:border-gray-900 focus:shadow-lg focus:shadow-gray-100/50 transition-all uppercase placeholder:text-gray-200"
+                />
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          <div className="space-y-1 md:space-y-1.5">
             <div className="flex items-center justify-between">
               <label className="text-[9px] md:text-[10px] font-black uppercase text-gray-400 block tracking-[0.2em] ml-1 flex items-center gap-1.5">
                 <Calendar size={10} className="text-gray-300" /> {dateMode === 'month' ? 'Delivery Month' : 'Delivery Date (DD/MM/YYYY)'}
@@ -140,12 +341,13 @@ export const OrderCard: React.FC<OrderCardProps> = ({ order, index, onUpdate, on
               type={dateMode === 'date' ? 'date' : 'month'}
               value={order.deliveryDate || ''}
               onChange={(e) => onUpdate(order.id, { deliveryDate: e.target.value })}
-              className="w-full text-xs md:text-sm font-bold bg-gray-50/50 border border-gray-100 rounded-[14px] md:rounded-[16px] px-4 md:px-5 py-2.5 md:py-3 outline-none focus:bg-white focus:border-gray-900 focus:shadow-lg focus:shadow-gray-100/50 transition-all uppercase"
+              onKeyDown={handleKeyDown}
+              className="w-full text-xs md:text-sm font-bold bg-gray-50/50 border border-gray-100 rounded-[14px] md:rounded-[16px] px-4 md:px-5 py-2 md:py-2.5 outline-none focus:bg-white focus:border-gray-900 focus:shadow-lg focus:shadow-gray-100/50 transition-all uppercase"
             />
           </div>
 
           <div className="grid grid-cols-2 gap-3 md:gap-4">
-            <div className="space-y-1.5 md:space-y-2">
+            <div className="space-y-1 md:space-y-1.5">
               <label className="text-[9px] md:text-[10px] font-black uppercase text-gray-400 block tracking-[0.2em] ml-1 flex items-center gap-1.5">
                 <Hash size={10} className="text-gray-300" /> Qty
               </label>
@@ -153,12 +355,13 @@ export const OrderCard: React.FC<OrderCardProps> = ({ order, index, onUpdate, on
                 type="number"
                 value={order.quantity === 0 ? '' : order.quantity}
                 onChange={(e) => onUpdate(order.id, { quantity: parseInt(e.target.value) || 0 })}
+                onKeyDown={handleKeyDown}
                 placeholder="0"
-                className="w-full text-xs md:text-sm font-bold bg-gray-50/50 border border-gray-100 rounded-[14px] md:rounded-[16px] px-4 md:px-5 py-2.5 md:py-3 outline-none focus:bg-white focus:border-gray-900 focus:shadow-lg focus:shadow-gray-100/50 transition-all placeholder:text-gray-200"
+                className="w-full text-xs md:text-sm font-bold bg-gray-50/50 border border-gray-100 rounded-[14px] md:rounded-[16px] px-4 md:px-5 py-2 md:py-2.5 outline-none focus:bg-white focus:border-gray-900 focus:shadow-lg focus:shadow-gray-100/50 transition-all placeholder:text-gray-200"
               />
             </div>
 
-            <div className="space-y-1.5 md:space-y-2">
+            <div className="space-y-1 md:space-y-1.5">
               <label className="text-[9px] md:text-[10px] font-black uppercase text-gray-400 block tracking-[0.2em] ml-1 flex items-center gap-1.5">
                 <DollarSign size={10} className="text-gray-300" /> Unit Cost
               </label>
@@ -166,14 +369,15 @@ export const OrderCard: React.FC<OrderCardProps> = ({ order, index, onUpdate, on
                 type="number"
                 value={order.costPrice === 0 ? '' : order.costPrice}
                 onChange={(e) => onUpdate(order.id, { costPrice: parseFloat(e.target.value) || 0 })}
+                onKeyDown={handleKeyDown}
                 placeholder="0.00"
-                className="w-full text-xs md:text-sm font-bold bg-gray-50/50 border border-gray-100 rounded-[14px] md:rounded-[16px] px-4 md:px-5 py-2.5 md:py-3 outline-none focus:bg-white focus:border-gray-900 focus:shadow-lg focus:shadow-gray-100/50 transition-all placeholder:text-gray-200"
+                className="w-full text-xs md:text-sm font-bold bg-gray-50/50 border border-gray-100 rounded-[14px] md:rounded-[16px] px-4 md:px-5 py-2 md:py-2.5 outline-none focus:bg-white focus:border-gray-900 focus:shadow-lg focus:shadow-gray-100/50 transition-all placeholder:text-gray-200"
               />
             </div>
           </div>
 
           <div className="grid grid-cols-2 gap-3 md:gap-4">
-            <div className="space-y-1.5 md:space-y-2">
+            <div className="space-y-1 md:space-y-1.5">
               <label className="text-[9px] md:text-[10px] font-black uppercase text-gray-400 block tracking-[0.2em] ml-1 flex items-center gap-1.5">
                 <Percent size={10} className="text-gray-300" /> VAT Rate
               </label>
@@ -182,13 +386,14 @@ export const OrderCard: React.FC<OrderCardProps> = ({ order, index, onUpdate, on
                   type="number"
                   value={order.vatRate === 0 ? '' : order.vatRate}
                   onChange={(e) => onUpdate(order.id, { vatRate: parseFloat(e.target.value) || 0 })}
-                  className="w-full text-xs md:text-sm font-bold bg-gray-50/50 border border-gray-100 rounded-[14px] md:rounded-[16px] px-4 md:px-5 py-2.5 md:py-3 outline-none focus:bg-white focus:border-gray-900 focus:shadow-lg focus:shadow-gray-100/50 transition-all pr-8 md:pr-10"
+                  onKeyDown={handleKeyDown}
+                  className="w-full text-xs md:text-sm font-bold bg-gray-50/50 border border-gray-100 rounded-[14px] md:rounded-[16px] px-4 md:px-5 py-2 md:py-2.5 outline-none focus:bg-white focus:border-gray-900 focus:shadow-lg focus:shadow-gray-100/50 transition-all pr-8 md:pr-10"
                 />
                 <span className="absolute right-3 md:right-4 top-1/2 -translate-y-1/2 text-[10px] md:text-xs font-black text-gray-300">%</span>
               </div>
             </div>
 
-            <div className="space-y-1.5 md:space-y-2">
+            <div className="space-y-1 md:space-y-1.5">
               <label className="text-[9px] md:text-[10px] font-black uppercase text-gray-400 block tracking-[0.2em] ml-1 flex items-center gap-1.5">
                 <Hash size={10} className="text-gray-300" /> Start Index
               </label>
@@ -196,7 +401,8 @@ export const OrderCard: React.FC<OrderCardProps> = ({ order, index, onUpdate, on
                 type="number"
                 value={order.startFrom}
                 onChange={(e) => onUpdate(order.id, { startFrom: parseInt(e.target.value) || 1 })}
-                className="w-full text-xs md:text-sm font-bold bg-gray-50/50 border border-gray-100 rounded-[14px] md:rounded-[16px] px-4 md:px-5 py-2.5 md:py-3 outline-none focus:bg-white focus:border-gray-900 focus:shadow-lg focus:shadow-gray-100/50 transition-all"
+                onKeyDown={handleKeyDown}
+                className="w-full text-xs md:text-sm font-bold bg-gray-50/50 border border-gray-100 rounded-[14px] md:rounded-[16px] px-4 md:px-5 py-2 md:py-2.5 outline-none focus:bg-white focus:border-gray-900 focus:shadow-lg focus:shadow-gray-100/50 transition-all"
               />
             </div>
           </div>

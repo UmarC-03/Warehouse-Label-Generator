@@ -14,6 +14,8 @@ function cn(...inputs: ClassValue[]) {
 
 const INITIAL_ORDER: Omit<Order, 'id'> = {
   heading: '',
+  brand: '',
+  description: '',
   categoryId: 'standard',
   quantity: 0,
   costPrice: 0,
@@ -92,8 +94,8 @@ export default function App() {
   return (
     <div className="h-screen flex flex-col bg-white font-sans overflow-hidden">
       {/* Main Interface - Constrained to Viewport */}
-      <main className="flex-1 flex flex-col items-center justify-start px-4 py-8 md:py-12 min-h-0 bg-gray-50/50 overflow-y-auto">
-        <div className="w-full max-w-sm flex flex-col items-center gap-6 md:gap-8 my-auto">
+      <main className="flex-1 flex flex-col items-center justify-start px-4 py-4 md:py-8 min-h-0 bg-gray-50/50 overflow-y-auto">
+        <div className="w-full max-w-sm flex flex-col items-center gap-4 md:gap-6 my-auto">
           
           {/* Header Action */}
           <div className="w-full flex justify-end">
@@ -157,10 +159,10 @@ export default function App() {
           </div>
 
           {/* Controls Hub */}
-          <div className="w-full flex flex-col items-center gap-6">
+          <div className="w-full flex flex-col items-center gap-4">
             {/* Liquid Single-Row Horizontal Navigation */}
             <div className="w-full relative group">
-              <div className="flex overflow-x-auto gap-2 px-1 py-4 snap-x scrollbar-thin scrollbar-track-transparent scrollbar-thumb-gray-300 hover:scrollbar-thumb-gray-400">
+              <div className="flex overflow-x-auto gap-2 px-1 py-2 snap-x scrollbar-thin scrollbar-track-transparent scrollbar-thumb-gray-300 hover:scrollbar-thumb-gray-400">
                 {orders.map((_, i) => (
                   <button
                     key={i}

@@ -42,18 +42,21 @@ export function calculateLayout(orders: Order[]): (Sticker & { slotIndex: number
     const currentSlot = fillSequence[sequencePointer];
     const isAtTopOfPage = currentSlot % SLOTS_PER_PAGE === 0;
     
-    // Top-of-Page Heading: If Order starts at Slot 0 of Page, use Slot 0 and Slot 1 (horizontal merger)
-    const useWideHeader = isAtTopOfPage;
+    // Top-of-Page Heading: Wide header only if more than 10 labels for this order
+    const useWideHeader = isAtTopOfPage && order.quantity > 10;
 
     const headerBase = {
       orderId: order.id,
       heading: order.heading,
+      brand: order.brand,
+      description: order.description,
       color: order.categoryId,
+      highlights: order.highlights,
     };
 
     if (useWideHeader) {
-      const leftSlot = 0 + Math.floor(currentSlot / SLOTS_PER_PAGE) * SLOTS_PER_PAGE;
-      const rightSlot = 1 + Math.floor(currentSlot / SLOTS_PER_PAGE) * SLOTS_PER_PAGE;
+      const leftSlot = currentSlot; 
+      const rightSlot = currentSlot + 1; // Slot 1 is always currentSlot+1 if currentSlot % SLOTS_PER_PAGE === 0
 
       allSlots[leftSlot] = {
         ...headerBase,
@@ -61,7 +64,7 @@ export function calculateLayout(orders: Order[]): (Sticker & { slotIndex: number
         isWide: true
       };
       allSlots[rightSlot] = null; // Reserved
-      sequencePointer++; // Move pointer past Slot 0 (Slot 1 is also taken but we skip it later too)
+      sequencePointer++; // Skip left slot (right is auto-skipped by busy check)
     } else {
       allSlots[currentSlot] = {
         ...headerBase,
@@ -76,9 +79,40 @@ export function calculateLayout(orders: Order[]): (Sticker & { slotIndex: number
     const lackhenbug = encodeLackhenbug(order.costPrice, order.vatRate);
 
     for (let i = 0; i < order.quantity; i++) {
-      // Skip already reserved slots
+      // Find next truly free slot in sequence
       while (allSlots[fillSequence[sequencePointer]] !== undefined) {
         sequencePointer++;
+      }
+
+      // Check for Page Break: If we are at the start of a new page sequence
+      if (sequencePointer > 0 && sequencePointer % SLOTS_PER_PAGE === 0) {
+        const breakSlot = fillSequence[sequencePointer];
+        if (breakSlot % SLOTS_PER_PAGE === 0) {
+          const remaining = order.quantity - i;
+          const isWide = remaining > 10;
+
+          if (isWide) {
+            allSlots[breakSlot] = {
+              ...headerBase,
+              type: 'header',
+              isWide: true
+            };
+            allSlots[breakSlot + 1] = null; // Reserved
+            sequencePointer++; // Move past left
+          } else {
+            allSlots[breakSlot] = {
+              ...headerBase,
+              type: 'header',
+              isWide: false
+            };
+            sequencePointer++;
+          }
+          
+          // Re-verify sequence pointer is on a truly free slot
+          while (allSlots[fillSequence[sequencePointer]] !== undefined) {
+            sequencePointer++;
+          }
+        }
       }
 
       const slotIdx = fillSequence[sequencePointer];
@@ -90,7 +124,8 @@ export function calculateLayout(orders: Order[]): (Sticker & { slotIndex: number
         itemNumber: startFrom + i,
         monthIndex,
         lackhenbugCode: lackhenbug,
-        deliveryDate: order.deliveryDate
+        deliveryDate: order.deliveryDate,
+        highlights: order.highlights
       };
       sequencePointer++;
     }
