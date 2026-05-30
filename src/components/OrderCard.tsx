@@ -22,7 +22,7 @@ export const OrderCard: React.FC<OrderCardProps> = ({ order, index, onUpdate, on
   const [showColorPicker, setShowColorPicker] = React.useState(false);
   const [showBrand, setShowBrand] = React.useState(!!order.brand);
   const [showDescription, setShowDescription] = React.useState(!!order.description);
-  const [dateMode, setDateMode] = React.useState<'date' | 'month'>('month');
+  const [dateMode, setDateMode] = React.useState<'date' | 'month'>('date');
   const [selection, setSelection] = React.useState<{ start: number, end: number, x: number, y: number } | null>(null);
   const isWarning = error?.startsWith('Warning:');
 
