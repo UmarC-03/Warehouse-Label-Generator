@@ -31,7 +31,7 @@ export const LACKHENBUG_MAP: Record<string, string> = {
 export const CATEGORY_PRESETS: CategoryPreset[] = [
   { id: 'standard', label: 'Standard', color: '#000000', icon: Type },
   { id: 'microwaves', label: 'Microwaves', color: '#B8860B', icon: Microwave },
-  { id: 'stoves', label: 'Stoves', color: '#C0C0C0', icon: CookingPot },
+  { id: 'stoves', label: 'Stoves', color: '#969393', icon: CookingPot },
   { id: 'fridges', label: 'Fridges', color: '#007BFF', icon: Refrigerator },
   { id: 'ovens', label: 'Ovens', color: '#FFD700', icon: Flame },
   { id: 'freezers', label: 'Chest Freezers', color: '#008080', icon: Snowflake },

@@ -104,7 +104,7 @@ export default function App() {
                 className="bg-black hover:bg-gray-900 text-white px-5 py-2.5 rounded-2xl text-[10px] font-black uppercase tracking-[0.15em] transition-all shadow-lg shadow-black/10 flex items-center gap-2 active:scale-95"
               >
                 <Plus size={14} strokeWidth={3} />
-                <span>Add Line</span>
+                <span>Add Order</span>
               </button>
           </div>
 
