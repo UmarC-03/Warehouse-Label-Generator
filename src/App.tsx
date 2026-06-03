@@ -1,10 +1,10 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
-import { Plus, Download, AlertCircle, Trash2, ChevronLeft, ChevronRight, Sparkles, Loader2, Lock } from 'lucide-react';
+import { Plus, Download, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Order, Sticker } from './types';
 import { OrderCard } from './components/OrderCard';
 import { calculateLayout } from './utils/layout';
+import { ExtractionModal } from './components/ExtractionModal';
 import { generatePDF } from './utils/pdfGenerator';
-import { parseDocumentFile } from './utils/documentParser';
 import { motion, AnimatePresence } from 'motion/react';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
@@ -25,15 +25,31 @@ const INITIAL_ORDER: Omit<Order, 'id'> = {
   deliveryDate: ''
 };
 
+const sanitizeInputValue = (str: any, maxLength: number): string => {
+  if (str === null || str === undefined) return '';
+  let val = String(str);
+  // Strip HTML tag-like brackets or content
+  val = val.replace(/<[^>]*>?/g, '');
+  // Neutralize javascript: schemas
+  val = val.replace(/javascript:/gi, '');
+  if (val.length > maxLength) {
+    val = val.substring(0, maxLength);
+  }
+  return val;
+};
+
 export default function App() {
   const [orders, setOrders] = useState<Order[]>([{ ...INITIAL_ORDER, id: crypto.randomUUID() }]);
   const [activeIndex, setActiveIndex] = useState(0);
-  const [isImporting, setIsImporting] = useState(false);
-  const [importError, setImportError] = useState<string | null>(null);
-  const [importedCount, setImportedCount] = useState<number | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isExtractionModalOpen, setIsExtractionModalOpen] = useState(false);
 
   const stickers = useMemo(() => calculateLayout(orders), [orders]);
+
+  const handleExtract = (selectedOrders: Order[], forceNewPage: boolean) => {
+    const selectedStickers = calculateLayout(selectedOrders, forceNewPage);
+    generatePDF(selectedStickers);
+    setIsExtractionModalOpen(false);
+  };
 
   const validationResults = useMemo(() => {
     const results: Record<string, string> = {};
@@ -56,10 +72,38 @@ export default function App() {
   };
 
   const updateOrder = (id: string, updates: Partial<Order>) => {
-    if (updates.quantity !== undefined) {
-      updates.quantity = Math.min(1000, updates.quantity);
+    const sanitized: Partial<Order> = { ...updates };
+    
+    // Prevent Prototype Pollution
+    if (sanitized.hasOwnProperty('__proto__') || sanitized.hasOwnProperty('constructor')) {
+      return;
     }
-    setOrders(orders.map(o => o.id === id ? { ...o, ...updates } : o));
+
+    if (sanitized.heading !== undefined) {
+      sanitized.heading = sanitizeInputValue(sanitized.heading, 50);
+    }
+    if (sanitized.brand !== undefined) {
+      sanitized.brand = sanitizeInputValue(sanitized.brand, 50);
+    }
+    if (sanitized.description !== undefined) {
+      sanitized.description = sanitizeInputValue(sanitized.description, 100);
+    }
+    if (sanitized.deliveryDate !== undefined) {
+      sanitized.deliveryDate = sanitizeInputValue(sanitized.deliveryDate, 20);
+    }
+    if (sanitized.quantity !== undefined) {
+      sanitized.quantity = Math.min(1000, Math.max(0, parseInt(String(sanitized.quantity)) || 0));
+    }
+    if (sanitized.costPrice !== undefined) {
+      const parsedCost = parseFloat(String(sanitized.costPrice));
+      sanitized.costPrice = isNaN(parsedCost) ? 0 : Math.max(0, parsedCost);
+    }
+    if (sanitized.vatRate !== undefined) {
+      const parsedVat = parseFloat(String(sanitized.vatRate));
+      sanitized.vatRate = isNaN(parsedVat) ? 15 : Math.max(0, parsedVat);
+    }
+
+    setOrders(orders.map(o => o.id === id ? { ...o, ...sanitized } : o));
   };
 
   const removeOrder = (id: string) => {
@@ -84,50 +128,7 @@ export default function App() {
     }
   };
 
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
 
-    setIsImporting(true);
-    setImportError(null);
-    setImportedCount(null);
-
-    try {
-      const parsed = await parseDocumentFile(file);
-      if (parsed.length === 0) {
-        throw new Error("No order items could be extracted from this document.");
-      }
-
-      const isBlank = orders.length === 1 && 
-                      orders[0].heading === '' && 
-                      orders[0].brand === '' && 
-                      orders[0].description === '' && 
-                      orders[0].quantity === 0;
-
-      let updatedOrders: Order[];
-      let targetIndex = 0;
-
-      if (isBlank) {
-        updatedOrders = parsed;
-        targetIndex = 0;
-      } else {
-        updatedOrders = [...orders, ...parsed];
-        targetIndex = orders.length;
-      }
-
-      setOrders(updatedOrders);
-      setActiveIndex(targetIndex);
-      setImportedCount(parsed.length);
-    } catch (err: any) {
-      console.error("Import failed:", err);
-      setImportError(err.message || "Failed to parse document. Ensure the file contains structured text or tabular data.");
-    } finally {
-      setIsImporting(false);
-      if (e.target) {
-        e.target.value = '';
-      }
-    }
-  };
 
   const handleDownload = () => {
     generatePDF(stickers);
@@ -152,92 +153,22 @@ export default function App() {
         <div className="w-full max-w-sm flex flex-col items-center gap-4 md:gap-6 my-auto">
           
           {/* Header Action */}
-          <div className="w-full flex items-center justify-between gap-2.5">
-             <input 
-               type="file"
-               ref={fileInputRef}
-               onChange={handleFileChange}
-               accept=".pdf,.docx,.xlsx,.xls,.csv,.txt"
-               className="hidden"
-             />
-
+          <div className="w-full flex justify-end gap-2">
              <button
-                disabled={true}
-                className="flex-1 bg-gray-100 border border-gray-200 text-gray-400 px-4 py-2.5 rounded-2xl text-[10px] font-black uppercase tracking-[0.12em] transition-all flex items-center justify-center gap-2 cursor-not-allowed"
-                title="AI Import Beta is temporarily locked to prevent overuse during evaluation"
+                onClick={() => setIsExtractionModalOpen(true)}
+                id="extraction-option-btn"
+                className="bg-black border border-gray-200 hover:border-black text-white px-4 py-2.5 rounded-2xl text-[10px] font-black uppercase tracking-[0.12em] transition-all flex items-center justify-center gap-2 active:scale-95 cursor-pointer"
               >
-                <Lock size={12} className="text-gray-400" />
-                <span>Import (AI) [LOCKED]</span>
-             </button>
-
-             <button
+                <span>Extract</span>
+              </button>
+              <button
                 onClick={addOrder}
-                className="bg-black hover:bg-gray-900 text-white px-4 py-2.5 rounded-2xl text-[10px] font-black uppercase tracking-[0.12em] transition-all shadow-md shadow-black/10 flex items-center justify-center gap-2 active:scale-95 cursor-pointer"
+                className="bg-black hover:bg-gray-900 text-white px-5 py-2.5 rounded-2xl text-[10px] font-black uppercase tracking-[0.12em] transition-all shadow-md shadow-black/10 flex items-center justify-center gap-2 active:scale-95 cursor-pointer"
               >
                 <Plus size={13} strokeWidth={3} />
                 <span>Add Order</span>
               </button>
           </div>
-
-          {/* AI Import Status and Error Banners */}
-          <AnimatePresence>
-            {isImporting && (
-              <motion.div 
-                initial={{ opacity: 0, height: 0, y: -4 }}
-                animate={{ opacity: 1, height: "auto", y: 0 }}
-                exit={{ opacity: 0, height: 0, y: -4 }}
-                className="w-full bg-blue-50 border border-blue-100 rounded-2xl p-3 flex items-center gap-3 shadow-sm"
-              >
-                <Loader2 size={16} className="animate-spin text-blue-600 shrink-0" />
-                <div className="flex-1">
-                  <p className="text-[10px] font-black text-blue-900 uppercase tracking-wider">AI Parsing Active</p>
-                  <p className="text-[9px] font-bold text-blue-600 leading-tight">Extracting contents and reconstructing order cards with OpenRouter...</p>
-                </div>
-              </motion.div>
-            )}
-
-            {importError && (
-              <motion.div 
-                initial={{ opacity: 0, height: 0, y: -4 }}
-                animate={{ opacity: 1, height: "auto", y: 0 }}
-                exit={{ opacity: 0, height: 0, y: -4 }}
-                className="w-full bg-red-50 border border-red-100 rounded-2xl p-3 flex items-start gap-3 shadow-sm relative animate-pulse-once"
-              >
-                <AlertCircle size={16} className="text-red-500 shrink-0 mt-0.5" />
-                <div className="flex-1 pr-6">
-                  <p className="text-[10px] font-black text-red-900 uppercase tracking-wider">Import Failed</p>
-                  <p className="text-[9px] font-bold text-red-600 leading-tight">{importError}</p>
-                </div>
-                <button 
-                  onClick={() => setImportError(null)}
-                  className="absolute top-2.5 right-2.5 text-red-400 hover:text-red-700 text-xs font-black"
-                >
-                  ✕
-                </button>
-              </motion.div>
-            )}
-
-            {importedCount !== null && (
-              <motion.div 
-                initial={{ opacity: 0, height: 0, y: -4 }}
-                animate={{ opacity: 1, height: "auto", y: 0 }}
-                exit={{ opacity: 0, height: 0, y: -4 }}
-                className="w-full bg-emerald-50 border border-emerald-100 rounded-2xl p-3 flex items-center gap-3 shadow-sm"
-              >
-                <Sparkles size={16} className="text-emerald-600 shrink-0 animate-bounce" />
-                <div className="flex-1">
-                  <p className="text-[10px] font-black text-emerald-900 uppercase tracking-wider">Import Succeeded</p>
-                  <p className="text-[9px] font-bold text-emerald-600 leading-tight">Successfully generated <strong>{importedCount}</strong> order cards with AI!</p>
-                </div>
-                <button 
-                  onClick={() => setImportedCount(null)}
-                  className="text-emerald-400 hover:text-emerald-700 text-xs font-black shrink-0 px-1"
-                >
-                  ✕
-                </button>
-              </motion.div>
-            )}
-          </AnimatePresence>
 
           {/* Card Area */}
           <div className="w-full flex items-center justify-center">
@@ -342,6 +273,13 @@ export default function App() {
           </div>
         </div>
       </main>
+
+      <ExtractionModal
+        isOpen={isExtractionModalOpen}
+        onDismiss={() => setIsExtractionModalOpen(false)}
+        orders={orders}
+        onExtract={handleExtract}
+      />
     </div>
   );
 }
