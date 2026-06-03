@@ -35,7 +35,7 @@ export const LabelPreview: React.FC<LabelPreviewProps> = ({ stickers }) => {
           
           <div className="flex-1 grid grid-cols-2 grid-rows-11 gap-1.5 p-2 bg-slate-50/50 border border-slate-100">
             {page.map((sticker, idx) => {
-                if (sticker === null) return null; // Skip reserved slots so span-2 doesn't push grid
+                if (sticker === null || sticker?.type === 'reserved') return null; // Skip reserved slots so span-2 doesn't push grid
                 return <StickerCell key={idx} sticker={sticker} />;
             })}
           </div>
@@ -46,8 +46,8 @@ export const LabelPreview: React.FC<LabelPreviewProps> = ({ stickers }) => {
 };
 
 const StickerCell: React.FC<{ sticker?: Sticker | null }> = ({ sticker }) => {
-  // If sticker is null, it means it's a slot reserved by a wide header (Vertical grid would put it in Col 2 Row 0)
-  if (sticker === null) return <div className="bg-slate-100/30 border border-dashed border-slate-200 flex items-center justify-center"><span className="text-[8px] text-slate-300 font-bold uppercase tracking-tight">Reserved</span></div>;
+  // If sticker is null or reserved, it means it's a slot reserved by a wide header (Vertical grid would put it in Col 2 Row 0)
+  if (sticker === null || sticker?.type === 'reserved') return null;
   
   // If undefined, it's just an empty slot
   if (sticker === undefined) return <div className="bg-slate-100/50 border border-dashed border-slate-200" />;

@@ -11,35 +11,30 @@ export function calculateLayout(orders: Order[]): (Sticker & { slotIndex: number
   const SLOTS_PER_PAGE = ROWS_PER_PAGE * COLS_PER_PAGE;
   const allSlots: (Sticker | null)[] = [];
 
-  // Pre-calculate the fill sequence for multiple pages
-  // Sequence for 10 pages initially, can expand if needed
-  const getSequence = (maxPages = 20) => {
-    const seq: number[] = [];
-    for (let p = 0; p < maxPages; p++) {
-      const pageStart = p * SLOTS_PER_PAGE;
-      // First Left Col (Even)
-      for (let r = 0; r < ROWS_PER_PAGE; r++) {
-        seq.push(pageStart + (r * 2));
-      }
-      // Then Right Col (Odd)
-      for (let r = 0; r < ROWS_PER_PAGE; r++) {
-        seq.push(pageStart + (r * 2 + 1));
-      }
+  // Infinite dynamic sequence calculation (no limits/array bound errors)
+  const getSlotFromSequence = (index: number): number => {
+    const page = Math.floor(index / SLOTS_PER_PAGE);
+    const slotOnPage = index % SLOTS_PER_PAGE;
+    const pageStart = page * SLOTS_PER_PAGE;
+    
+    if (slotOnPage < ROWS_PER_PAGE) {
+      return pageStart + (slotOnPage * 2);
+    } else {
+      const r = slotOnPage - ROWS_PER_PAGE;
+      return pageStart + (r * 2 + 1);
     }
-    return seq;
   };
 
-  const fillSequence = getSequence();
   let sequencePointer = 0;
 
   orders.forEach((order) => {
     const monthIndex = formatMonthIndex(order.deliveryDate);
     // 1. Find next truly free slot in sequence
-    while (allSlots[fillSequence[sequencePointer]] !== undefined) {
+    while (allSlots[getSlotFromSequence(sequencePointer)] !== undefined) {
       sequencePointer++;
     }
 
-    const currentSlot = fillSequence[sequencePointer];
+    const currentSlot = getSlotFromSequence(sequencePointer);
     const isAtTopOfPage = currentSlot % SLOTS_PER_PAGE === 0;
     
     // Top-of-Page Heading: Wide header only if more than 10 labels for this order
@@ -80,13 +75,13 @@ export function calculateLayout(orders: Order[]): (Sticker & { slotIndex: number
 
     for (let i = 0; i < order.quantity; i++) {
       // Find next truly free slot in sequence
-      while (allSlots[fillSequence[sequencePointer]] !== undefined) {
+      while (allSlots[getSlotFromSequence(sequencePointer)] !== undefined) {
         sequencePointer++;
       }
 
       // Check for Page Break: If we are at the start of a new page sequence
       if (sequencePointer > 0 && sequencePointer % SLOTS_PER_PAGE === 0) {
-        const breakSlot = fillSequence[sequencePointer];
+        const breakSlot = getSlotFromSequence(sequencePointer);
         if (breakSlot % SLOTS_PER_PAGE === 0) {
           const remaining = order.quantity - i;
           const isWide = remaining > 10;
@@ -109,13 +104,13 @@ export function calculateLayout(orders: Order[]): (Sticker & { slotIndex: number
           }
           
           // Re-verify sequence pointer is on a truly free slot
-          while (allSlots[fillSequence[sequencePointer]] !== undefined) {
+          while (allSlots[getSlotFromSequence(sequencePointer)] !== undefined) {
             sequencePointer++;
           }
         }
       }
 
-      const slotIdx = fillSequence[sequencePointer];
+      const slotIdx = getSlotFromSequence(sequencePointer);
       allSlots[slotIdx] = {
         type: 'item',
         orderId: order.id,
@@ -132,6 +127,16 @@ export function calculateLayout(orders: Order[]): (Sticker & { slotIndex: number
   });
 
   return allSlots
-    .map((s, idx) => (s ? { ...s, slotIndex: idx } : null))
-    .filter((s): s is (Sticker & { slotIndex: number }) => s !== null);
+    .map((s, idx) => {
+      if (s === null) {
+        return {
+          type: 'reserved' as const,
+          slotIndex: idx,
+          orderId: '',
+          heading: '',
+          color: ''
+        };
+      }
+      return { ...s, slotIndex: idx } as Sticker & { slotIndex: number };
+    });
 }

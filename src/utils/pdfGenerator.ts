@@ -57,7 +57,7 @@ export function generatePDF(stickers: (Sticker & { slotIndex: number })[]) {
   const SLOTS_PER_PAGE = ROWS_PER_PAGE * COLS_PER_PAGE;
 
   stickers.forEach((sticker) => {
-    if (!sticker) return;
+    if (!sticker || sticker.type === 'reserved') return;
 
     const pageIndex = Math.floor(sticker.slotIndex / SLOTS_PER_PAGE);
     const slotOnPage = sticker.slotIndex % SLOTS_PER_PAGE;

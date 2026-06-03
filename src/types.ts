@@ -28,7 +28,7 @@ export interface Highlight {
 }
 
 export interface Sticker {
-  type: 'header' | 'item';
+  type: 'header' | 'item' | 'reserved';
   orderId: string;
   heading: string;
   brand?: string;

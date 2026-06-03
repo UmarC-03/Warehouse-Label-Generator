@@ -1,4 +1,4 @@
-const CACHE_NAME = 'labelgenerator-v2.0.3';
+const CACHE_NAME = 'labelgenerator-v2.5';
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
