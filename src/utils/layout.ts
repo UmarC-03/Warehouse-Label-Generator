@@ -7,7 +7,7 @@ import { encodeLackhenbug, formatMonthIndex } from './pricing';
  * 22-Up (11 rows x 2 columns) Coordinate Mapping.
  * Fill Even slots (Left Col) then Odd slots (Right Col).
  */
-export function calculateLayout(orders: Order[], forceNewPage: boolean = false): (Sticker & { slotIndex: number })[] {
+export function calculateLayout(orders: Order[], forceNewPageOptions?: boolean | Set<string>): (Sticker & { slotIndex: number })[] {
   const SLOTS_PER_PAGE = ROWS_PER_PAGE * COLS_PER_PAGE;
   const allSlots: (Sticker | null)[] = [];
 
@@ -28,7 +28,14 @@ export function calculateLayout(orders: Order[], forceNewPage: boolean = false):
   let sequencePointer = 0;
 
   orders.forEach((order, orderIndex) => {
-    if (forceNewPage && orderIndex > 0) {
+    let shouldForce = false;
+    if (forceNewPageOptions instanceof Set) {
+      shouldForce = forceNewPageOptions.has(order.id);
+    } else {
+      shouldForce = !!forceNewPageOptions;
+    }
+
+    if (shouldForce && orderIndex > 0) {
       const currentPage = Math.ceil(sequencePointer / SLOTS_PER_PAGE);
       sequencePointer = currentPage * SLOTS_PER_PAGE;
     }

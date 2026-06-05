@@ -45,8 +45,8 @@ export default function App() {
 
   const stickers = useMemo(() => calculateLayout(orders), [orders]);
 
-  const handleExtract = (selectedOrders: Order[], forceNewPage: boolean) => {
-    const selectedStickers = calculateLayout(selectedOrders, forceNewPage);
+  const handleExtract = (selectedOrders: Order[], forcedNewPageIds: Set<string>) => {
+    const selectedStickers = calculateLayout(selectedOrders, forcedNewPageIds);
     generatePDF(selectedStickers);
     setIsExtractionModalOpen(false);
   };
@@ -159,7 +159,7 @@ export default function App() {
                 id="extraction-option-btn"
                 className="bg-black border border-gray-200 hover:border-black text-white px-4 py-2.5 rounded-2xl text-[10px] font-black uppercase tracking-[0.12em] transition-all flex items-center justify-center gap-2 active:scale-95 cursor-pointer"
               >
-                <span>Extract</span>
+                <span>Organise Print</span>
               </button>
               <button
                 onClick={addOrder}
@@ -279,6 +279,7 @@ export default function App() {
         onDismiss={() => setIsExtractionModalOpen(false)}
         orders={orders}
         onExtract={handleExtract}
+        onReorder={setOrders}
       />
     </div>
   );
