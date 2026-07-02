@@ -1,20 +1,11 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://ai.google.dev/static/site-assets/images/share-ais-513315318.png" />
-</div>
+## LabelMaster Enterprise
 
-# Run and deploy your AI Studio app
+An autonomous, inventory label generation engine designed to streamline warehouse logistics through strict data formatting, dynamic color systems, and uncompromised page-overflow control. This system replaces unpredictable, manual input configurations with a structured web application that translates raw inventory metrics into professional, print-ready stock tags.
 
-This contains everything you need to run your app locally.
+The core of the project is a high-contrast visual architecture optimized for rapid processing environments, ensuring warehouse personnel can instantly identify and categorize freight with absolute visual clarity.
 
-View your app in AI Studio: https://ai.studio/apps/07348876-f875-499e-8590-8df2ce07b82d
+## Usage Notice
 
-## Run Locally
+All code and concepts in this repository are proprietary. No permission is granted to copy, modify, distribute, sublicense, or use this project or its underlying concept for commercial or non-commercial purposes without explicit written permission from the author.
 
-**Prerequisites:**  Node.js
-
-
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+Copyright (c) 2026 Umar Coovadia
