@@ -404,7 +404,7 @@ export const OrderCard: React.FC<OrderCardProps> = ({ order, index, onUpdate, on
               <input
                 type="number"
                 value={order.startFrom === 0 ? '' : order.startFrom}
-                onChange={(e) => onUpdate(order.id, { startFrom: parseInt(e.target.value) || 1 })}
+                onChange={(e) => onUpdate(order.id, { startFrom: parseInt(e.target.value) || 0 })}
                 onKeyDown={handleKeyDown}
                 className="w-full text-xs font-bold bg-gray-50/50 border border-gray-100 rounded-[11px] md:rounded-[13px] px-3.5 md:px-4 py-1.5 md:py-2 outline-none focus:bg-white focus:border-gray-900 focus:shadow-lg focus:shadow-gray-100/50 transition-all"
               />
