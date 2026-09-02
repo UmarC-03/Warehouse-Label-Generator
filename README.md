@@ -1,6 +1,6 @@
-## LabelMaster Enterprise
+## Warehouse Label Generator
 
-An autonomous, inventory label generation engine designed to streamline warehouse logistics through strict data formatting, dynamic color systems, and uncompromised page-overflow control. This system replaces unpredictable, manual input configurations with a structured web application that translates raw inventory metrics into professional, print-ready stock tags.
+A semi-autonomous, inventory label generation engine designed to streamline warehouse logistics through strict data formatting, dynamic color systems, and uncompromised page-overflow control. This system replaces unpredictable, manual configurations with a structured web application that translates raw inventory metrics into professional, print-ready stock tags.
 
 The core of the project is a high-contrast visual architecture optimized for rapid processing environments, ensuring warehouse personnel can instantly identify and categorize freight with absolute visual clarity.
 
