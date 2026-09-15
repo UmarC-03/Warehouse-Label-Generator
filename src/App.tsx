@@ -56,9 +56,9 @@ export default function App() {
     orders.forEach((o) => {
       if (!o.heading.trim()) results[o.id] = "Heading Empty";
       else if (o.quantity <= 0) results[o.id] = "Qty must be > 0";
-      else if (o.quantity > 1000) results[o.id] = "Qty cannot exceed 1000";
+      else if (o.quantity > 49) results[o.id] = "Warning: Great Qty";
       else if (o.categoryId === 'standard') results[o.id] = "Warning: Black Text Selected";
-      else if (o.costPrice > 0 && o.costPrice <= 500) results[o.id] = "Warning: Low Price (1-350)";
+      else if (o.costPrice > 0 && o.costPrice <= 500) results[o.id] = "Warning: Low Price";
     });
     return results;
   }, [orders]);
